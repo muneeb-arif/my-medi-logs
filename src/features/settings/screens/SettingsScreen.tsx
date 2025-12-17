@@ -1,22 +1,212 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { authApi } from '@features/auth/api/auth.api';
+import { useSessionStore } from '@store/session.store';
+import Constants from 'expo-constants';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { useAccountMe } from '../hooks/useAccountMe';
 
 export const SettingsScreen: React.FC = () => {
+  const navigation = useNavigation();
+  const { data: account, isLoading, error } = useAccountMe();
+  const { refreshToken, clearSession } = useSessionStore();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoggingOut(true);
+            try {
+              if (refreshToken) {
+                await authApi.logout({ refreshToken });
+              }
+            } catch (error) {
+              // Continue with logout even if API call fails
+            } finally {
+              await clearSession();
+              setIsLoggingOut(false);
+              // Navigation will be handled by RootNavigator when accessToken becomes null
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Settings Screen (Placeholder)</Text>
-    </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Account Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Account</Text>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" />
+            <Text style={styles.loadingText}>Loading account...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Failed to load account information</Text>
+          </View>
+        ) : account ? (
+          <View style={styles.accountCard}>
+            <Text style={styles.accountName}>{account.name}</Text>
+            <Text style={styles.accountEmail}>{account.email}</Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Preferences Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Preferences</Text>
+        <TouchableOpacity style={styles.settingRow} disabled>
+          <Text style={styles.settingLabel}>Language</Text>
+          <Text style={styles.settingValue}>English</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingRow} disabled>
+          <Text style={styles.settingLabel}>Notifications</Text>
+          <Text style={styles.settingValue}>Configure</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Privacy & Security Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Privacy & Security</Text>
+        <TouchableOpacity style={styles.settingRow} disabled>
+          <Text style={styles.settingLabel}>Consent & Access Logs</Text>
+          <Text style={styles.settingValue}>Coming in v1.0</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.settingRow} disabled>
+          <Text style={styles.settingLabel}>Data Export</Text>
+          <Text style={styles.settingValue}>Coming soon</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* About Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.settingRow}>
+          <Text style={styles.settingLabel}>App Version</Text>
+          <Text style={styles.settingValue}>
+            {Constants.expoConfig?.version || '1.0.0'}
+          </Text>
+        </View>
+      </View>
+
+      {/* Logout */}
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={[styles.logoutButton, isLoggingOut && styles.logoutButtonDisabled]}
+          onPress={handleLogout}
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.logoutButtonText}>Logout</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#F5F5F5',
+  },
+  content: {
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 12,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  errorContainer: {
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#FF3B30',
+  },
+  accountCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 8,
+  },
+  accountName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  accountEmail: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  settingLabel: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  settingValue: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
+  logoutButton: {
+    backgroundColor: '#FF3B30',
+    padding: 16,
+    borderRadius: 8,
     alignItems: 'center',
   },
-  text: {
-    fontSize: 18,
+  logoutButtonDisabled: {
+    opacity: 0.6,
+  },
+  logoutButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
-
