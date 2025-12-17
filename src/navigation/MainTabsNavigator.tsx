@@ -1,3 +1,4 @@
+import { HomeScreen } from '@features/home/screens/HomeScreen';
 import { ProfilesNavigator } from '@features/profiles/ProfilesNavigator';
 import { ReportsNavigator } from '@features/reports/ReportsNavigator';
 import { SettingsScreen } from '@features/settings/screens/SettingsScreen';
@@ -18,6 +19,13 @@ export const MainTabsNavigator: React.FC = () => {
         tabBarInactiveTintColor: '#8E8E93',
       }}
     >
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
+        }}
+      />
       <Tab.Screen
         name="Profiles"
         component={ProfilesNavigator}
