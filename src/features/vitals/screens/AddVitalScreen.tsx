@@ -5,7 +5,8 @@ import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
-  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +14,10 @@ import {
   View,
 } from 'react-native';
 import { z } from 'zod';
+import { Screen } from '@components/Screen';
+import { SectionCard } from '@components/SectionCard';
+import { PrimaryButton } from '@components/PrimaryButton';
+import { spacing, typography } from '@theme';
 import { useCreateVital } from '../hooks/useCreateVital';
 import type { BloodPressureValue, VitalType } from '../types';
 
@@ -45,7 +50,6 @@ const createVitalSchema = (type: VitalType) => {
       notes: z.string().optional(),
     });
   }
-
   return z.object({
     type: z.enum(['blood_glucose', 'heart_rate', 'temperature', 'weight', 'spo2']),
     value: z.number().min(0),
@@ -59,20 +63,13 @@ type VitalFormData = z.infer<ReturnType<typeof createVitalSchema>>;
 
 const getDefaultUnit = (type: VitalType): string => {
   switch (type) {
-    case 'blood_pressure':
-      return 'mmHg';
-    case 'blood_glucose':
-      return 'mg/dL';
-    case 'heart_rate':
-      return 'bpm';
-    case 'temperature':
-      return 'C';
-    case 'weight':
-      return 'kg';
-    case 'spo2':
-      return '%';
-    default:
-      return '';
+    case 'blood_pressure': return 'mmHg';
+    case 'blood_glucose': return 'mg/dL';
+    case 'heart_rate': return 'bpm';
+    case 'temperature': return 'C';
+    case 'weight': return 'kg';
+    case 'spo2': return '%';
+    default: return '';
   }
 };
 
@@ -81,9 +78,7 @@ export const AddVitalScreen: React.FC = () => {
   const route = useRoute();
   const profileId = (route.params as { profileId: string })?.profileId;
   const createVital = useCreateVital(profileId);
-
   const [selectedType, setSelectedType] = React.useState<VitalType>('blood_pressure');
-
   const schema = React.useMemo(() => createVitalSchema(selectedType), [selectedType]);
 
   const {
@@ -128,12 +123,8 @@ export const AddVitalScreen: React.FC = () => {
   const onSubmit = async (data: VitalFormData) => {
     try {
       let payload;
-
       if (selectedType === 'blood_pressure') {
-        const value: BloodPressureValue = {
-          systolic: data.systolic,
-          diastolic: data.diastolic,
-        };
+        const value: BloodPressureValue = { systolic: data.systolic, diastolic: data.diastolic };
         payload = {
           type: 'blood_pressure',
           value,
@@ -150,7 +141,6 @@ export const AddVitalScreen: React.FC = () => {
           notes: data.notes || undefined,
         };
       }
-
       await createVital.mutateAsync(payload);
       navigation.goBack();
     } catch (error) {
@@ -159,201 +149,221 @@ export const AddVitalScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.typeSelector}>
-        <Text style={styles.label}>Vital Type</Text>
-        <View style={styles.typeButtons}>
-          {VITAL_TYPES.map((type) => (
-            <TouchableOpacity
-              key={type}
-              style={[styles.typeButton, selectedType === type && styles.typeButtonActive]}
-              onPress={() => setSelectedType(type)}
-            >
-              <Text style={[styles.typeButtonText, selectedType === type && styles.typeButtonTextActive]}>
-                {VITAL_TYPE_LABELS[type]}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {selectedType === 'blood_pressure' ? (
-        <>
-          <View style={styles.field}>
-            <Text style={styles.label}>Systolic (mmHg)</Text>
-            <Controller
-              control={control}
-              name="systolic"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={value?.toString()}
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  keyboardType="numeric"
-                  placeholder="120"
-                />
-              )}
-            />
-            {errors.systolic && <Text style={styles.error}>{errors.systolic.message}</Text>}
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Diastolic (mmHg)</Text>
-            <Controller
-              control={control}
-              name="diastolic"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  style={styles.input}
-                  value={value?.toString()}
-                  onChangeText={(text) => onChange(Number(text) || 0)}
-                  keyboardType="numeric"
-                  placeholder="80"
-                />
-              )}
-            />
-            {errors.diastolic && <Text style={styles.error}>{errors.diastolic.message}</Text>}
-          </View>
-        </>
-      ) : (
-        <View style={styles.field}>
-          <Text style={styles.label}>Value ({getDefaultUnit(selectedType)})</Text>
-          <Controller
-            control={control}
-            name="value"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                style={styles.input}
-                value={value?.toString()}
-                onChangeText={(text) => onChange(Number(text) || 0)}
-                keyboardType="numeric"
-                placeholder="0"
-              />
-            )}
-          />
-          {errors.value && <Text style={styles.error}>{errors.value.message}</Text>}
-        </View>
-      )}
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Date & Time</Text>
-        <Controller
-          control={control}
-          name="recordedAt"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              placeholder="YYYY-MM-DDTHH:mm"
-            />
-          )}
-        />
-        {errors.recordedAt && <Text style={styles.error}>{errors.recordedAt.message}</Text>}
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Notes (Optional)</Text>
-        <Controller
-          control={control}
-          name="notes"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={value || ''}
-              onChangeText={onChange}
-              multiline
-              numberOfLines={3}
-              placeholder="Additional notes..."
-            />
-          )}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit(onSubmit)}
-        disabled={createVital.isPending}
+    <Screen scrollable padding="none">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
       >
-        {createVital.isPending ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.submitButtonText}>Save Vital</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.content}>
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>Vital Type</Text>
+            <View style={styles.typeButtons}>
+              {VITAL_TYPES.map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.typeButton, selectedType === type && styles.typeButtonActive]}
+                  onPress={() => setSelectedType(type)}
+                >
+                  <Text style={[styles.typeText, selectedType === type && styles.typeTextActive]}>
+                    {VITAL_TYPE_LABELS[type]}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </SectionCard>
+
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>Reading</Text>
+            {selectedType === 'blood_pressure' ? (
+              <>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Systolic (mmHg) *</Text>
+                  <Controller
+                    control={control}
+                    name="systolic"
+                    render={({ field: { onChange, value } }) => (
+                      <>
+                        <TextInput
+                          style={[styles.input, errors.systolic && styles.inputError]}
+                          value={value?.toString()}
+                          onChangeText={(text) => onChange(Number(text) || 0)}
+                          keyboardType="numeric"
+                          placeholder="120"
+                        />
+                        {errors.systolic && <Text style={styles.errorText}>{errors.systolic.message}</Text>}
+                      </>
+                    )}
+                  />
+                </View>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Diastolic (mmHg) *</Text>
+                  <Controller
+                    control={control}
+                    name="diastolic"
+                    render={({ field: { onChange, value } }) => (
+                      <>
+                        <TextInput
+                          style={[styles.input, errors.diastolic && styles.inputError]}
+                          value={value?.toString()}
+                          onChangeText={(text) => onChange(Number(text) || 0)}
+                          keyboardType="numeric"
+                          placeholder="80"
+                        />
+                        {errors.diastolic && <Text style={styles.errorText}>{errors.diastolic.message}</Text>}
+                      </>
+                    )}
+                  />
+                </View>
+              </>
+            ) : (
+              <View style={styles.field}>
+                <Text style={styles.label}>Value ({getDefaultUnit(selectedType)}) *</Text>
+                <Controller
+                  control={control}
+                  name="value"
+                  render={({ field: { onChange, value } }) => (
+                    <>
+                      <TextInput
+                        style={[styles.input, errors.value && styles.inputError]}
+                        value={value?.toString()}
+                        onChangeText={(text) => onChange(Number(text) || 0)}
+                        keyboardType="numeric"
+                        placeholder="0"
+                      />
+                      {errors.value && <Text style={styles.errorText}>{errors.value.message}</Text>}
+                    </>
+                  )}
+                />
+              </View>
+            )}
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Date & Time *</Text>
+              <Controller
+                control={control}
+                name="recordedAt"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TextInput
+                      style={[styles.input, errors.recordedAt && styles.inputError]}
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="YYYY-MM-DDTHH:mm"
+                    />
+                    {errors.recordedAt && <Text style={styles.errorText}>{errors.recordedAt.message}</Text>}
+                    <Text style={styles.helperText}>Format: YYYY-MM-DDTHH:mm (e.g., 2025-07-26T10:00)</Text>
+                  </>
+                )}
+              />
+            </View>
+          </SectionCard>
+
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>Notes</Text>
+            <View style={styles.field}>
+              <Text style={styles.label}>Additional Notes (Optional)</Text>
+              <Controller
+                control={control}
+                name="notes"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    multiline
+                    numberOfLines={3}
+                    placeholder="Any additional notes..."
+                  />
+                )}
+              />
+            </View>
+          </SectionCard>
+
+          <PrimaryButton
+            label="Save Vital"
+            onPress={handleSubmit(onSubmit)}
+            loading={createVital.isPending}
+            disabled={createVital.isPending}
+            style={styles.submitButton}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   content: {
-    padding: 16,
+    padding: spacing.md,
+    paddingBottom: 120,
   },
-  typeSelector: {
-    marginBottom: 24,
+  section: {
+    marginBottom: spacing.md,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#000000',
+  sectionTitle: {
+    ...typography.h2,
+    fontSize: 18,
+    marginBottom: spacing.md,
   },
   typeButtons: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   typeButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: 8,
     backgroundColor: '#E5E5EA',
   },
   typeButtonActive: {
     backgroundColor: '#007AFF',
   },
-  typeButtonText: {
+  typeText: {
+    ...typography.body,
     fontSize: 14,
     color: '#000000',
   },
-  typeButtonTextActive: {
+  typeTextActive: {
     color: '#FFFFFF',
   },
   field: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
+  },
+  label: {
+    ...typography.bodyBold,
+    marginBottom: spacing.xs,
   },
   input: {
     borderWidth: 1,
     borderColor: '#E5E5EA',
     borderRadius: 8,
-    padding: 12,
+    padding: spacing.md,
     fontSize: 16,
     backgroundColor: '#FFFFFF',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
   },
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  error: {
+  errorText: {
+    ...typography.caption,
     color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
+    marginTop: spacing.xs,
+  },
+  helperText: {
+    ...typography.caption,
+    color: '#8E8E93',
+    marginTop: spacing.xs,
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
   },
 });
-

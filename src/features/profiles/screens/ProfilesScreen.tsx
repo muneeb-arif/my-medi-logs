@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Screen } from '@components/Screen';
+import { SectionCard } from '@components/SectionCard';
+import { EmptyState } from '@components/EmptyState';
+import { PrimaryButton } from '@components/PrimaryButton';
+import { spacing, typography } from '@theme';
 import { useProfilesList } from '../hooks/useProfilesList';
 import { useDeleteProfile } from '../hooks/useDeleteProfile';
 import { useActiveProfileStore } from '@store/activeProfile.store';
@@ -48,125 +45,124 @@ export const ProfilesScreen: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </Screen>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Failed to load profiles</Text>
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Failed to load profiles</Text>
+        </View>
+      </Screen>
     );
   }
 
   const renderProfileItem = ({ item }: { item: PersonProfile }) => (
-    <TouchableOpacity
+    <SectionCard
       style={[
         styles.profileItem,
         activeProfileId === item.id && styles.activeProfileItem,
       ]}
-      onPress={() => handleSelectProfile(item.id)}
     >
-      <View style={styles.profileInfo}>
-        <Text style={styles.profileName}>{item.fullName}</Text>
-        <Text style={styles.profileRelation}>{item.relationToAccount}</Text>
+      <View style={styles.profileContent}>
+        <TouchableOpacity
+          style={styles.profileInfo}
+          onPress={() => handleSelectProfile(item.id)}
+        >
+          <Text style={styles.profileName}>{item.fullName}</Text>
+          <Text style={styles.profileRelation}>{item.relationToAccount}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(item)}
+        >
+          <Text style={styles.deleteButtonText}>Delete</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleDelete(item)}
-      >
-        <Text style={styles.deleteButtonText}>Delete</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
+    </SectionCard>
   );
 
   return (
-    <View style={styles.container}>
+    <Screen>
       <FlatList
         data={data?.items || []}
         renderItem={renderProfileItem}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <View style={styles.centerContainer}>
-            <Text style={styles.emptyText}>No profiles yet</Text>
-          </View>
+          <EmptyState
+            icon="👤"
+            title="No profiles yet"
+            description="Profiles help you keep health records separate for each family member."
+            actionLabel="Add Profile"
+            onAction={() => navigation.navigate('ProfileEditor' as never, { mode: 'create' } as never)}
+          />
         }
       />
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => navigation.navigate('ProfileEditor' as never, { mode: 'create' } as never)}
-      >
-        <Text style={styles.addButtonText}>+ Add Profile</Text>
-      </TouchableOpacity>
-    </View>
+      {data?.items && data.items.length > 0 && (
+        <View style={styles.buttonContainer}>
+          <PrimaryButton
+            label="+ Add Profile"
+            onPress={() => navigation.navigate('ProfileEditor' as never, { mode: 'create' } as never)}
+          />
+        </View>
+      )}
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  listContent: {
+    padding: spacing.md,
+  },
   profileItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    marginBottom: spacing.md,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   activeProfileItem: {
     borderColor: '#007AFF',
   },
+  profileContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   profileInfo: {
     flex: 1,
   },
   profileName: {
+    ...typography.h2,
     fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   profileRelation: {
-    fontSize: 14,
-    color: '#666',
+    ...typography.caption,
   },
   deleteButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
   },
   deleteButtonText: {
-    color: 'red',
+    color: '#FF3B30',
     fontSize: 14,
   },
-  addButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  addButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+  buttonContainer: {
+    padding: spacing.md,
   },
   errorText: {
-    color: 'red',
-    fontSize: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
+    ...typography.body,
+    color: '#FF3B30',
   },
 });

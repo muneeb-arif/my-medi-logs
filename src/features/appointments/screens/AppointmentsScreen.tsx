@@ -10,6 +10,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Screen } from '@components/Screen';
+import { EmptyState } from '@components/EmptyState';
+import { spacing, typography } from '@theme';
 import { useDeleteAppointment } from '../hooks/useDeleteAppointment';
 import { useAppointmentsList } from '../hooks/useAppointmentsList';
 import type { Appointment } from '../types';
@@ -79,36 +82,39 @@ export const AppointmentsScreen: React.FC = () => {
 
   if (!activeProfileId) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No active profile selected</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Profiles' as never)}
-        >
-          <Text style={styles.buttonText}>Go to Profiles</Text>
-        </TouchableOpacity>
-      </View>
+      <Screen>
+        <EmptyState
+          title="No active profile selected"
+          description="Select or create a profile to manage appointments"
+          actionLabel="Go to Profiles"
+          onAction={() => navigation.navigate('Profiles' as never)}
+        />
+      </Screen>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </Screen>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Failed to load appointments</Text>
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Failed to load appointments</Text>
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen>
       <View style={styles.filterContainer}>
         <TouchableOpacity
           style={[styles.filterButton, filter === 'upcoming' && styles.filterButtonActive]}
@@ -137,20 +143,18 @@ export const AppointmentsScreen: React.FC = () => {
       </View>
 
       {filteredAppointments.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No appointments found</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() =>
-              navigation.navigate('AppointmentEditor' as never, {
-                profileId: activeProfileId,
-                mode: 'create',
-              } as never)
-            }
-          >
-            <Text style={styles.buttonText}>Add Appointment</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          icon="📅"
+          title="No appointments yet"
+          description="Track upcoming visits and past consultations."
+          actionLabel="Add Appointment"
+          onAction={() =>
+            navigation.navigate('AppointmentEditor' as never, {
+              profileId: activeProfileId,
+              mode: 'create',
+            } as never)
+          }
+        />
       ) : (
         <>
           <FlatList
@@ -195,15 +199,11 @@ export const AppointmentsScreen: React.FC = () => {
           </TouchableOpacity>
         </>
       )}
-    </View>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -268,31 +268,8 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: 2,
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#8E8E93',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   errorText: {
-    fontSize: 16,
+    ...typography.body,
     color: '#FF3B30',
   },
   fab: {

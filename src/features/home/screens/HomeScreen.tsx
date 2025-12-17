@@ -1,14 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { useActiveProfileStore } from '@store/activeProfile.store';
 import React, { useMemo } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Screen } from '@components/Screen';
+import { AppHeader } from '@components/AppHeader';
+import { SectionCard } from '@components/SectionCard';
+import { ListRow } from '@components/ListRow';
+import { EmptyState } from '@components/EmptyState';
+import { PrimaryButton } from '@components/PrimaryButton';
+import { spacing, typography } from '@theme';
 import { useMedicationsList } from '@features/medications/hooks/useMedicationsList';
 import { useProfileDetail } from '@features/profiles/hooks/useProfileDetail';
 import { useReportsList } from '@features/reports/hooks/useReportsList';
@@ -84,43 +84,69 @@ export const HomeScreen: React.FC = () => {
 
   if (!activeProfileId) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No active profile selected</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Profiles' as never)}
-        >
-          <Text style={styles.buttonText}>Go to Profiles</Text>
-        </TouchableOpacity>
-      </View>
+      <Screen>
+        <AppHeader title="Home" />
+        <EmptyState
+          title="No active profile selected"
+          description="Select or create a profile to view your health dashboard"
+          actionLabel="Go to Profiles"
+          onAction={() => navigation.navigate('Profiles' as never)}
+        />
+      </Screen>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
-      </View>
+      <Screen>
+        <AppHeader title="Home" />
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {profile && (
-        <View style={styles.profileCard}>
-          <Text style={styles.profileName}>{profile.fullName}</Text>
-          <View style={styles.profileDetails}>
-            <Text style={styles.profileDetail}>
-              Age: {calculateAge(profile.dateOfBirth)}
-            </Text>
-            {profile.relationToAccount && (
-              <Text style={styles.profileDetail}>{profile.relationToAccount}</Text>
-            )}
+    <Screen scrollable>
+      <AppHeader title="Home" />
+      
+      {/* Active Profile Card */}
+      {profile ? (
+        <SectionCard style={styles.profileCard}>
+          <View style={styles.profileHeader}>
+            <View style={styles.profileInfo}>
+              <Text style={styles.profileName}>{profile.fullName}</Text>
+              <View style={styles.profileDetails}>
+                <Text style={styles.profileDetail}>
+                  Age {calculateAge(profile.dateOfBirth)}
+                </Text>
+                {profile.relationToAccount && (
+                  <Text style={styles.profileDetail}> • {profile.relationToAccount}</Text>
+                )}
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Profiles' as never)}
+              style={styles.changeButton}
+            >
+              <Text style={styles.changeButtonText}>Change</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        </SectionCard>
+      ) : (
+        <SectionCard style={styles.profileCard}>
+          <EmptyState
+            title="No profile selected"
+            description="Create or select a profile to get started"
+            actionLabel="Go to Profiles"
+            onAction={() => navigation.navigate('Profiles' as never)}
+          />
+        </SectionCard>
       )}
 
-      <View style={styles.section}>
+      {/* Appointments Section */}
+      <SectionCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Appointments</Text>
           <TouchableOpacity
@@ -134,21 +160,21 @@ export const HomeScreen: React.FC = () => {
             <Text style={styles.viewAllText}>View all</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.itemCard}
+        <ListRow
+          title="Manage Appointments"
+          subtitle="View and schedule appointments"
           onPress={() => {
             const appNavigator = navigation.getParent();
             if (appNavigator) {
               appNavigator.navigate('Appointments' as never);
             }
           }}
-        >
-          <Text style={styles.itemTitle}>Manage Appointments</Text>
-          <Text style={styles.itemSubtitle}>View and schedule appointments</Text>
-        </TouchableOpacity>
-      </View>
+          showDivider={false}
+        />
+      </SectionCard>
 
-      <View style={styles.section}>
+      {/* Reports Section */}
+      <SectionCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Reports</Text>
           <TouchableOpacity
@@ -160,27 +186,25 @@ export const HomeScreen: React.FC = () => {
         {recentReports.length === 0 ? (
           <Text style={styles.emptySectionText}>No reports yet</Text>
         ) : (
-          recentReports.map((report: Report) => (
-            <TouchableOpacity
+          recentReports.map((report: Report, index: number) => (
+            <ListRow
               key={report.id}
-              style={styles.itemCard}
+              title={report.title}
+              subtitle={`${report.type} • ${new Date(report.reportDate).toLocaleDateString()}`}
               onPress={() =>
                 navigation.navigate('ReportViewer' as never, {
                   profileId: activeProfileId,
                   reportId: report.id,
                 } as never)
               }
-            >
-              <Text style={styles.itemTitle}>{report.title}</Text>
-              <Text style={styles.itemSubtitle}>
-                {report.type} • {new Date(report.reportDate).toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
+              showDivider={index < recentReports.length - 1}
+            />
           ))
         )}
-      </View>
+      </SectionCard>
 
-      <View style={styles.section}>
+      {/* Vitals Section */}
+      <SectionCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Vitals</Text>
           <TouchableOpacity
@@ -192,31 +216,24 @@ export const HomeScreen: React.FC = () => {
         {recentVitals.length === 0 ? (
           <Text style={styles.emptySectionText}>No vitals recorded yet</Text>
         ) : (
-          recentVitals.map((vital: VitalEntry) => (
-            <TouchableOpacity
+          recentVitals.map((vital: VitalEntry, index: number) => (
+            <ListRow
               key={vital.id}
-              style={styles.itemCard}
+              title={VITAL_TYPE_LABELS[vital.type] || vital.type}
+              subtitle={`${formatVitalValue(vital)} • ${new Date(vital.recordedAt).toLocaleDateString()}`}
               onPress={() => navigation.getParent()?.navigate('Vitals' as never)}
-            >
-              <Text style={styles.itemTitle}>
-                {VITAL_TYPE_LABELS[vital.type] || vital.type}
-              </Text>
-              <Text style={styles.itemSubtitle}>
-                {formatVitalValue(vital)} •{' '}
-                {new Date(vital.recordedAt).toLocaleDateString()}
-              </Text>
-            </TouchableOpacity>
+              showDivider={index < recentVitals.length - 1}
+            />
           ))
         )}
-      </View>
+      </SectionCard>
 
-      <View style={styles.section}>
+      {/* Medications Section */}
+      <SectionCard style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Medications</Text>
           <TouchableOpacity
             onPress={() => {
-              // Navigate to Medications at the AppNavigator level
-              // MainTabsNavigator's parent is AppNavigator, which contains Medications route
               const appNavigator = navigation.getParent();
               if (appNavigator) {
                 appNavigator.navigate('Medications' as never);
@@ -234,121 +251,84 @@ export const HomeScreen: React.FC = () => {
               {ongoingMedications.length} ongoing medication
               {ongoingMedications.length !== 1 ? 's' : ''}
             </Text>
-            {ongoingMedications.slice(0, 2).map((med: Medication) => (
-              <View key={med.id} style={styles.itemCard}>
-                <Text style={styles.itemTitle}>{med.name}</Text>
-                {med.dose && med.doseUnit && (
-                  <Text style={styles.itemSubtitle}>
-                    {med.dose} {med.doseUnit} • {med.frequency.replace('_', ' ')}
-                  </Text>
-                )}
-              </View>
+            {ongoingMedications.slice(0, 2).map((med: Medication, index: number) => (
+              <ListRow
+                key={med.id}
+                title={med.name}
+                subtitle={
+                  med.dose && med.doseUnit
+                    ? `${med.dose} ${med.doseUnit} • ${med.frequency.replace('_', ' ')}`
+                    : med.frequency.replace('_', ' ')
+                }
+                showDivider={index < Math.min(ongoingMedications.length, 2) - 1}
+              />
             ))}
           </>
         )}
-      </View>
-    </ScrollView>
+      </SectionCard>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
-  content: {
-    padding: 16,
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#8E8E93',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   profileCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
+    marginBottom: spacing.md,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    flex: 1,
   },
   profileName: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 8,
+    ...typography.h2,
+    marginBottom: spacing.xs,
   },
   profileDetails: {
     flexDirection: 'row',
-    gap: 16,
   },
   profileDetail: {
-    fontSize: 14,
-    color: '#8E8E93',
+    ...typography.caption,
   },
-  section: {
-    marginBottom: 24,
+  changeButton: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  changeButtonText: {
+    ...typography.bodyBold,
+    color: '#007AFF',
+  },
+  sectionCard: {
+    marginBottom: spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.sm,
   },
   sectionTitle: {
+    ...typography.h2,
     fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
   },
   viewAllText: {
-    fontSize: 14,
+    ...typography.body,
     color: '#007AFF',
   },
   emptySectionText: {
-    fontSize: 14,
-    color: '#8E8E93',
+    ...typography.caption,
     fontStyle: 'italic',
-  },
-  itemCard: {
-    backgroundColor: '#FFFFFF',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  itemTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  itemSubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
+    paddingVertical: spacing.sm,
   },
   medicationCount: {
-    fontSize: 14,
-    color: '#8E8E93',
-    marginBottom: 8,
+    ...typography.caption,
+    marginBottom: spacing.sm,
   },
 });

@@ -4,16 +4,21 @@ import * as DocumentPicker from 'expo-document-picker';
 import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { z } from 'zod';
+import { Screen } from '@components/Screen';
+import { SectionCard } from '@components/SectionCard';
+import { PrimaryButton } from '@components/PrimaryButton';
+import { spacing, typography } from '@theme';
 import { useCreateReport } from '../hooks/useCreateReport';
 import type { ReportType } from '../types';
 
@@ -27,6 +32,15 @@ const reportSchema = z.object({
 });
 
 type ReportFormData = z.infer<typeof reportSchema>;
+
+const REPORT_TYPE_LABELS: Record<ReportType, string> = {
+  lab: 'Lab',
+  radiology: 'Radiology',
+  prescription: 'Prescription',
+  visit_note: 'Visit Note',
+  discharge: 'Discharge',
+  other: 'Other',
+};
 
 export const AddReportScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -108,7 +122,6 @@ export const AddReportScreen: React.FC = () => {
 
       navigation.goBack();
     } catch (error) {
-      // Safe error message - no PHI
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to upload report. Please try again.';
       Alert.alert('Error', errorMessage);
@@ -116,221 +129,253 @@ export const AddReportScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Controller
-        control={control}
-        name="title"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>Title *</Text>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              placeholder="Enter report title"
-            />
-            {errors.title && <Text style={styles.errorText}>{errors.title.message}</Text>}
-          </View>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="reportDate"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>Report Date *</Text>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              placeholder="YYYY-MM-DD"
-            />
-            {errors.reportDate && <Text style={styles.errorText}>{errors.reportDate.message}</Text>}
-          </View>
-        )}
-      />
-
-      <Controller
-        control={control}
-        name="type"
-        render={({ field: { onChange, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>Type *</Text>
-            <View style={styles.typeContainer}>
-              {(['lab', 'radiology', 'prescription', 'visit_note', 'discharge', 'other'] as const).map(
-                (type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[styles.typeButton, value === type && styles.typeButtonActive]}
-                    onPress={() => onChange(type)}
-                  >
-                    <Text
-                      style={[
-                        styles.typeButtonText,
-                        value === type && styles.typeButtonTextActive,
-                      ]}
-                    >
-                      {type}
-                    </Text>
-                  </TouchableOpacity>
-                )
+    <Screen scrollable padding="none">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <View style={styles.content}>
+          {/* File Section */}
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>File</Text>
+            <View style={styles.field}>
+              <Text style={styles.label}>Select File *</Text>
+              <TouchableOpacity style={styles.fileButton} onPress={pickDocument}>
+                <Text style={styles.fileButtonText}>
+                  {selectedFile ? `Selected: ${selectedFile.name}` : 'Select PDF, JPEG, or PNG'}
+                </Text>
+              </TouchableOpacity>
+              {!selectedFile && (
+                <Text style={styles.helperText}>Accepted formats: PDF, JPEG, PNG</Text>
               )}
             </View>
-            {errors.type && <Text style={styles.errorText}>{errors.type.message}</Text>}
-          </View>
-        )}
-      />
+          </SectionCard>
 
-      <Controller
-        control={control}
-        name="doctorName"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>Doctor Name</Text>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              placeholder="Optional"
-            />
-          </View>
-        )}
-      />
+          {/* Details Section */}
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>Details</Text>
+            
+            <View style={styles.field}>
+              <Text style={styles.label}>Title *</Text>
+              <Controller
+                control={control}
+                name="title"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <>
+                    <TextInput
+                      style={[styles.input, errors.title && styles.inputError]}
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Enter report title"
+                    />
+                    {errors.title && <Text style={styles.errorText}>{errors.title.message}</Text>}
+                  </>
+                )}
+              />
+            </View>
 
-      <Controller
-        control={control}
-        name="facility"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>Facility</Text>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              placeholder="Optional"
-            />
-          </View>
-        )}
-      />
+            <View style={styles.field}>
+              <Text style={styles.label}>Report Date *</Text>
+              <Controller
+                control={control}
+                name="reportDate"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <>
+                    <TextInput
+                      style={[styles.input, errors.reportDate && styles.inputError]}
+                      value={value}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="YYYY-MM-DD"
+                    />
+                    {errors.reportDate && (
+                      <Text style={styles.errorText}>{errors.reportDate.message}</Text>
+                    )}
+                    <Text style={styles.helperText}>Format: YYYY-MM-DD</Text>
+                  </>
+                )}
+              />
+            </View>
 
-      <Controller
-        control={control}
-        name="tags"
-        render={({ field: { onChange, onBlur, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>Tags</Text>
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              onBlur={onBlur}
-              placeholder="Comma-separated tags (optional)"
-            />
-          </View>
-        )}
-      />
+            <View style={styles.field}>
+              <Text style={styles.label}>Type *</Text>
+              <View style={styles.typeContainer}>
+                {(['lab', 'radiology', 'prescription', 'visit_note', 'discharge', 'other'] as const).map(
+                  (type) => (
+                    <Controller
+                      key={type}
+                      control={control}
+                      name="type"
+                      render={({ field: { onChange, value } }) => (
+                        <TouchableOpacity
+                          style={[styles.typeButton, value === type && styles.typeButtonActive]}
+                          onPress={() => onChange(type)}
+                        >
+                          <Text
+                            style={[
+                              styles.typeText,
+                              value === type && styles.typeTextActive,
+                            ]}
+                          >
+                            {REPORT_TYPE_LABELS[type]}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                  )
+                )}
+              </View>
+              {errors.type && <Text style={styles.errorText}>{errors.type.message}</Text>}
+            </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>File *</Text>
-        <TouchableOpacity style={styles.fileButton} onPress={pickDocument}>
-          <Text style={styles.fileButtonText}>
-            {selectedFile ? `Selected: ${selectedFile.name}` : 'Select PDF, JPEG, or PNG'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Doctor Name</Text>
+              <Controller
+                control={control}
+                name="doctorName"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Optional"
+                  />
+                )}
+              />
+            </View>
 
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit(onSubmit)}
-        disabled={createReport.isPending || !selectedFile}
-      >
-        {createReport.isPending ? (
-          <ActivityIndicator color="white" />
-        ) : (
-          <Text style={styles.submitButtonText}>Upload Report</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+            <View style={styles.field}>
+              <Text style={styles.label}>Facility</Text>
+              <Controller
+                control={control}
+                name="facility"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    placeholder="Optional"
+                  />
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Tags</Text>
+              <Controller
+                control={control}
+                name="tags"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      value={value || ''}
+                      onChangeText={onChange}
+                      onBlur={onBlur}
+                      placeholder="Comma-separated tags (optional)"
+                    />
+                    <Text style={styles.helperText}>Separate multiple tags with commas</Text>
+                  </>
+                )}
+              />
+            </View>
+          </SectionCard>
+
+          <PrimaryButton
+            label="Upload Report"
+            onPress={handleSubmit(onSubmit)}
+            loading={createReport.isPending}
+            disabled={createReport.isPending || !selectedFile}
+            style={styles.submitButton}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
-    padding: 16,
+  },
+  content: {
+    padding: spacing.md,
+    paddingBottom: 120,
+  },
+  section: {
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    fontSize: 18,
+    marginBottom: spacing.md,
   },
   field: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
+    ...typography.bodyBold,
+    marginBottom: spacing.xs,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#E5E5EA',
     borderRadius: 8,
-    padding: 12,
+    padding: spacing.md,
     fontSize: 16,
+    backgroundColor: '#FFFFFF',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
   },
   errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 4,
+    ...typography.caption,
+    color: '#FF3B30',
+    marginTop: spacing.xs,
+  },
+  helperText: {
+    ...typography.caption,
+    color: '#8E8E93',
+    marginTop: spacing.xs,
   },
   typeContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.sm,
   },
   typeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#E5E5EA',
   },
   typeButtonActive: {
     backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
   },
-  typeButtonText: {
-    fontSize: 12,
-    color: '#333',
+  typeText: {
+    ...typography.body,
+    fontSize: 14,
+    color: '#000000',
   },
-  typeButtonTextActive: {
-    color: 'white',
+  typeTextActive: {
+    color: '#FFFFFF',
   },
   fileButton: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#E5E5EA',
     borderRadius: 8,
-    padding: 12,
-    backgroundColor: '#f5f5f5',
+    padding: spacing.md,
+    backgroundColor: '#F5F5F5',
   },
   fileButtonText: {
-    fontSize: 14,
-    color: '#333',
+    ...typography.body,
+    color: '#000000',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 32,
-  },
-  submitButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
   },
 });
-

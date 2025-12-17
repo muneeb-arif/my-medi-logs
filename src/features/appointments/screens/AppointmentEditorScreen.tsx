@@ -5,7 +5,8 @@ import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
   Alert,
-  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +14,10 @@ import {
   View,
 } from 'react-native';
 import { z } from 'zod';
+import { Screen } from '@components/Screen';
+import { SectionCard } from '@components/SectionCard';
+import { PrimaryButton } from '@components/PrimaryButton';
+import { spacing, typography } from '@theme';
 import { useCreateAppointment } from '../hooks/useCreateAppointment';
 import { useUpdateAppointment } from '../hooks/useUpdateAppointment';
 import { useAppointmentDetail } from '../hooks/useAppointmentDetail';
@@ -118,235 +123,269 @@ export const AppointmentEditorScreen: React.FC = () => {
 
   if (isLoadingAppointment) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.field}>
-        <Text style={styles.label}>Title *</Text>
-        <Controller
-          control={control}
-          name="title"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              placeholder="Appointment title"
-            />
-          )}
-        />
-        {errors.title && <Text style={styles.error}>{errors.title.message}</Text>}
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Start Date & Time *</Text>
-        <Controller
-          control={control}
-          name="startAt"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-              placeholder="YYYY-MM-DDTHH:mm"
-            />
-          )}
-        />
-        {errors.startAt && <Text style={styles.error}>{errors.startAt.message}</Text>}
-        <Text style={styles.hint}>Format: YYYY-MM-DDTHH:mm (e.g., 2025-07-26T10:00)</Text>
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>End Date & Time (Optional)</Text>
-        <Controller
-          control={control}
-          name="endAt"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value || ''}
-              onChangeText={onChange}
-              placeholder="YYYY-MM-DDTHH:mm"
-            />
-          )}
-        />
-        <Text style={styles.hint}>Format: YYYY-MM-DDTHH:mm</Text>
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Status *</Text>
-        <View style={styles.statusContainer}>
-          {STATUS_OPTIONS.map((option) => (
-            <Controller
-              key={option.value}
-              control={control}
-              name="status"
-              render={({ field: { onChange, value } }) => (
-                <TouchableOpacity
-                  style={[styles.statusButton, value === option.value && styles.statusButtonActive]}
-                  onPress={() => onChange(option.value)}
-                >
-                  <Text
-                    style={[styles.statusText, value === option.value && styles.statusTextActive]}
-                  >
-                    {option.label}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-          ))}
-        </View>
-        {errors.status && <Text style={styles.error}>{errors.status.message}</Text>}
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Doctor Name (Optional)</Text>
-        <Controller
-          control={control}
-          name="doctorName"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value || ''}
-              onChangeText={onChange}
-              placeholder="Dr. Name"
-            />
-          )}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Specialty (Optional)</Text>
-        <Controller
-          control={control}
-          name="specialty"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value || ''}
-              onChangeText={onChange}
-              placeholder="Cardiology, etc."
-            />
-          )}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Facility (Optional)</Text>
-        <Controller
-          control={control}
-          name="facility"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value || ''}
-              onChangeText={onChange}
-              placeholder="Hospital or clinic name"
-            />
-          )}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Location (Optional)</Text>
-        <Controller
-          control={control}
-          name="location"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={styles.input}
-              value={value || ''}
-              onChangeText={onChange}
-              placeholder="Address or location"
-            />
-          )}
-        />
-      </View>
-
-      <View style={styles.field}>
-        <Text style={styles.label}>Notes (Optional)</Text>
-        <Controller
-          control={control}
-          name="notes"
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              value={value || ''}
-              onChangeText={onChange}
-              multiline
-              numberOfLines={3}
-              placeholder="Additional notes..."
-            />
-          )}
-        />
-      </View>
-
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit(onSubmit)}
-        disabled={isLoading}
+    <Screen scrollable padding="none">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
       >
-        {isLoading ? (
-          <ActivityIndicator color="#FFFFFF" />
-        ) : (
-          <Text style={styles.submitButtonText}>{mode === 'create' ? 'Create' : 'Update'}</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.content}>
+          {/* Appointment Details */}
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>Appointment Details</Text>
+            
+            <View style={styles.field}>
+              <Text style={styles.label}>Title *</Text>
+              <Controller
+                control={control}
+                name="title"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TextInput
+                      style={[styles.input, errors.title && styles.inputError]}
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="Appointment title"
+                    />
+                    {errors.title && <Text style={styles.errorText}>{errors.title.message}</Text>}
+                  </>
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Start Date & Time *</Text>
+              <Controller
+                control={control}
+                name="startAt"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TextInput
+                      style={[styles.input, errors.startAt && styles.inputError]}
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder="YYYY-MM-DDTHH:mm"
+                    />
+                    {errors.startAt && <Text style={styles.errorText}>{errors.startAt.message}</Text>}
+                    <Text style={styles.helperText}>Format: YYYY-MM-DDTHH:mm (e.g., 2025-07-26T10:00)</Text>
+                  </>
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>End Date & Time</Text>
+              <Controller
+                control={control}
+                name="endAt"
+                render={({ field: { onChange, value } }) => (
+                  <>
+                    <TextInput
+                      style={styles.input}
+                      value={value || ''}
+                      onChangeText={onChange}
+                      placeholder="YYYY-MM-DDTHH:mm"
+                    />
+                    <Text style={styles.helperText}>Format: YYYY-MM-DDTHH:mm</Text>
+                  </>
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Status *</Text>
+              <View style={styles.statusContainer}>
+                {STATUS_OPTIONS.map((option) => (
+                  <Controller
+                    key={option.value}
+                    control={control}
+                    name="status"
+                    render={({ field: { onChange, value } }) => (
+                      <TouchableOpacity
+                        style={[styles.statusButton, value === option.value && styles.statusButtonActive]}
+                        onPress={() => onChange(option.value)}
+                      >
+                        <Text
+                          style={[styles.statusText, value === option.value && styles.statusTextActive]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                ))}
+              </View>
+              {errors.status && <Text style={styles.errorText}>{errors.status.message}</Text>}
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Doctor Name</Text>
+              <Controller
+                control={control}
+                name="doctorName"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    placeholder="Optional"
+                  />
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Specialty</Text>
+              <Controller
+                control={control}
+                name="specialty"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    placeholder="Optional"
+                  />
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Facility</Text>
+              <Controller
+                control={control}
+                name="facility"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    placeholder="Optional"
+                  />
+                )}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Location</Text>
+              <Controller
+                control={control}
+                name="location"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={styles.input}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    placeholder="Optional"
+                  />
+                )}
+              />
+            </View>
+          </SectionCard>
+
+          {/* Optional Notes */}
+          <SectionCard style={styles.section}>
+            <Text style={styles.sectionTitle}>Optional Notes</Text>
+            <View style={styles.field}>
+              <Text style={styles.label}>Notes</Text>
+              <Controller
+                control={control}
+                name="notes"
+                render={({ field: { onChange, value } }) => (
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    value={value || ''}
+                    onChangeText={onChange}
+                    multiline
+                    numberOfLines={3}
+                    placeholder="Additional notes..."
+                  />
+                )}
+              />
+            </View>
+          </SectionCard>
+
+          <PrimaryButton
+            label={mode === 'create' ? 'Create Appointment' : 'Update Appointment'}
+            onPress={handleSubmit(onSubmit)}
+            loading={isLoading}
+            disabled={isLoading}
+            style={styles.submitButton}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
   },
   content: {
-    padding: 16,
+    padding: spacing.md,
+    paddingBottom: 120,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  section: {
+    marginBottom: spacing.md,
+  },
+  sectionTitle: {
+    ...typography.h2,
+    fontSize: 18,
+    marginBottom: spacing.md,
+  },
   field: {
-    marginBottom: 16,
+    marginBottom: spacing.md,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#000000',
+    ...typography.bodyBold,
+    marginBottom: spacing.xs,
   },
   input: {
     borderWidth: 1,
     borderColor: '#E5E5EA',
     borderRadius: 8,
-    padding: 12,
+    padding: spacing.md,
     fontSize: 16,
     backgroundColor: '#FFFFFF',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
   },
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  hint: {
-    fontSize: 12,
+  helperText: {
+    ...typography.caption,
     color: '#8E8E93',
-    marginTop: 4,
+    marginTop: spacing.xs,
+  },
+  errorText: {
+    ...typography.caption,
+    color: '#FF3B30',
+    marginTop: spacing.xs,
   },
   statusContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: spacing.sm,
   },
   statusButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     borderRadius: 8,
     backgroundColor: '#E5E5EA',
     alignItems: 'center',
@@ -355,28 +394,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
   },
   statusText: {
+    ...typography.body,
     fontSize: 14,
     color: '#000000',
   },
   statusTextActive: {
     color: '#FFFFFF',
   },
-  error: {
-    color: '#FF3B30',
-    fontSize: 12,
-    marginTop: 4,
-  },
   submitButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
   },
 });
-

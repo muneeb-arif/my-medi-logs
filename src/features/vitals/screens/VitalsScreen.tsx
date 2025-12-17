@@ -11,6 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Screen } from '@components/Screen';
+import { SectionCard } from '@components/SectionCard';
+import { EmptyState } from '@components/EmptyState';
+import { PrimaryButton } from '@components/PrimaryButton';
+import { spacing, typography, radius } from '@theme';
 import { useDeleteVital } from '../hooks/useDeleteVital';
 import { useVitalsList } from '../hooks/useVitalsList';
 import type { VitalEntry, VitalType } from '../types';
@@ -102,49 +107,52 @@ export const VitalsScreen: React.FC = () => {
 
   if (!activeProfileId) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>No active profile selected</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('Profiles' as never)}
-        >
-          <Text style={styles.buttonText}>Go to Profiles</Text>
-        </TouchableOpacity>
-      </View>
+      <Screen>
+        <EmptyState
+          title="No active profile selected"
+          description="Select or create a profile to track vitals"
+          actionLabel="Go to Profiles"
+          onAction={() => navigation.navigate('Profiles' as never)}
+        />
+      </Screen>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" />
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" />
+        </View>
+      </Screen>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Failed to load vitals</Text>
-      </View>
+      <Screen>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorText}>Failed to load vitals</Text>
+        </View>
+      </Screen>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <Screen>
       {trend.last && (
-        <View style={styles.trendContainer}>
+        <SectionCard style={styles.trendCard}>
           <Text style={styles.trendLabel}>Last Reading</Text>
           <Text style={styles.trendValue}>{formatVitalValue(trend.last)}</Text>
           {trend.change && <Text style={styles.trendChange}>{trend.change}</Text>}
           <Text style={styles.trendDate}>
             {new Date(trend.last.recordedAt).toLocaleDateString()}
           </Text>
-        </View>
+        </SectionCard>
       )}
 
       <View style={styles.filterContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScrollContent}>
           <TouchableOpacity
             style={[styles.filterButton, !selectedType && styles.filterButtonActive]}
             onPress={() => setSelectedType(undefined)}
@@ -166,102 +174,97 @@ export const VitalsScreen: React.FC = () => {
       </View>
 
       {filteredEntries.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No vitals recorded yet</Text>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('AddVital' as never, { profileId: activeProfileId })}
-          >
-            <Text style={styles.buttonText}>Add Vital</Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          icon="📊"
+          title="No vitals recorded yet"
+          description="Track readings over time to spot trends."
+          actionLabel="Add Vital"
+          onAction={() => navigation.navigate('AddVital' as never, { profileId: activeProfileId })}
+        />
       ) : (
         <>
           <FlatList
             data={filteredEntries}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.entryItem}
-                onLongPress={() => handleDelete(item)}
-              >
-                <View style={styles.entryHeader}>
-                  <Text style={styles.entryType}>{VITAL_TYPE_LABELS[item.type]}</Text>
-                  <Text style={styles.entryValue}>{formatVitalValue(item)}</Text>
-                </View>
-                <Text style={styles.entryDate}>
-                  {new Date(item.recordedAt).toLocaleString()}
-                </Text>
-                {item.notes && <Text style={styles.entryNotes}>{item.notes}</Text>}
-              </TouchableOpacity>
+              <SectionCard style={styles.entryCard}>
+                <TouchableOpacity
+                  onLongPress={() => handleDelete(item)}
+                >
+                  <View style={styles.entryHeader}>
+                    <Text style={styles.entryType}>{VITAL_TYPE_LABELS[item.type]}</Text>
+                    <Text style={styles.entryValue}>{formatVitalValue(item)}</Text>
+                  </View>
+                  <Text style={styles.entryDate}>
+                    {new Date(item.recordedAt).toLocaleString()}
+                  </Text>
+                  {item.notes && <Text style={styles.entryNotes}>{item.notes}</Text>}
+                </TouchableOpacity>
+              </SectionCard>
             )}
             contentContainerStyle={styles.listContent}
           />
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => navigation.navigate('AddVital' as never, { profileId: activeProfileId })}
-          >
-            <Text style={styles.fabText}>+</Text>
-          </TouchableOpacity>
+          <View style={styles.fabContainer}>
+            <PrimaryButton
+              label="+ Add Vital"
+              onPress={() => navigation.navigate('AddVital' as never, { profileId: activeProfileId })}
+              style={styles.fab}
+            />
+          </View>
         </>
       )}
-    </View>
+    </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  trendContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    margin: 16,
-    borderRadius: 8,
+  trendCard: {
+    marginBottom: spacing.md,
     alignItems: 'center',
   },
   trendLabel: {
-    fontSize: 14,
-    color: '#8E8E93',
-    marginBottom: 4,
+    ...typography.caption,
+    marginBottom: spacing.xs,
   },
   trendValue: {
+    ...typography.h1,
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   trendChange: {
-    fontSize: 16,
+    ...typography.body,
     color: '#007AFF',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   trendDate: {
-    fontSize: 12,
-    color: '#8E8E93',
+    ...typography.caption,
   },
   filterContainer: {
-    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
+    marginBottom: spacing.sm,
+  },
+  filterScrollContent: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 4,
-    borderRadius: 16,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginRight: spacing.sm,
+    borderRadius: radius.sm,
     backgroundColor: '#E5E5EA',
   },
   filterButtonActive: {
     backgroundColor: '#007AFF',
   },
   filterText: {
+    ...typography.body,
     fontSize: 14,
     color: '#000000',
   },
@@ -269,87 +272,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   listContent: {
-    padding: 16,
+    padding: spacing.md,
   },
-  entryItem: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    marginBottom: 8,
-    borderRadius: 8,
+  entryCard: {
+    marginBottom: spacing.sm,
   },
   entryHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   entryType: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    ...typography.bodyBold,
   },
   entryValue: {
+    ...typography.h2,
     fontSize: 18,
-    fontWeight: 'bold',
     color: '#007AFF',
   },
   entryDate: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginBottom: 4,
+    ...typography.caption,
+    marginBottom: spacing.xs,
   },
   entryNotes: {
-    fontSize: 14,
-    color: '#000000',
-    marginTop: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#8E8E93',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    ...typography.body,
+    marginTop: spacing.xs,
   },
   errorText: {
-    fontSize: 16,
+    ...typography.body,
     color: '#FF3B30',
   },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 80,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007AFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+  fabContainer: {
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
   },
-  fabText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: 'bold',
+  fab: {
+    width: '100%',
   },
 });
-

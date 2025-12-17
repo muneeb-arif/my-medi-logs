@@ -5,7 +5,7 @@ import React from 'react';
 import { MainTabsNavigator } from './MainTabsNavigator';
 
 const Stack = createNativeStackNavigator();
-
+ 
 export const AppNavigator: React.FC = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

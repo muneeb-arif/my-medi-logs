@@ -9,6 +9,9 @@
       "@navigation/*": [
         "./src/navigation/*"
       ],
+      "@theme": [
+        "./src/theme/index.ts"
+      ],
       "@theme/*": [
         "./src/theme/*"
       ],
