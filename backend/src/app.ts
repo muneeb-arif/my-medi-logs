@@ -8,6 +8,8 @@ import { requestIdMiddleware } from './middleware/requestId';
 import authRoutes from './modules/auth/auth.routes';
 import profilesRoutes from './modules/profiles/profiles.routes';
 import reportsRoutes from './modules/reports/reports.routes';
+import vitalsRoutes from './modules/vitals/vitals.routes';
+import medicationsRoutes from './modules/medications/medications.routes';
 
 const app = express();
 
@@ -35,6 +37,8 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/profiles', profilesRoutes);
 app.use('/api/v1/profiles', reportsRoutes);
+app.use('/api/v1/profiles', vitalsRoutes);
+app.use('/api/v1/profiles', medicationsRoutes);
 
 // Fake upload endpoint (must be before error handler, no auth required)
 // Use regex to match any path after /fake-upload/

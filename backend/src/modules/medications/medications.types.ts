@@ -60,12 +60,3 @@ export interface MedicationsListParams {
   limit?: number;
 }
 
-export interface MedicationsListResponse {
-  items: Medication[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
-

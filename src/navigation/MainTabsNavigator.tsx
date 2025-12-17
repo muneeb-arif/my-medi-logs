@@ -1,8 +1,8 @@
-import { HomeScreen } from '@features/home/screens/HomeScreen';
 import { ProfilesNavigator } from '@features/profiles/ProfilesNavigator';
 import { ReportsNavigator } from '@features/reports/ReportsNavigator';
 import { SettingsScreen } from '@features/settings/screens/SettingsScreen';
 import { VitalsNavigator } from '@features/vitals/VitalsNavigator';
+import { MedicationsNavigator } from '@features/medications/MedicationsNavigator';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
@@ -19,13 +19,6 @@ export const MainTabsNavigator: React.FC = () => {
       }}
     >
       <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
         name="Profiles"
         component={ProfilesNavigator}
         options={{
@@ -37,6 +30,13 @@ export const MainTabsNavigator: React.FC = () => {
         component={VitalsNavigator}
         options={{
           tabBarIcon: ({ color, size }) => <Ionicons name="pulse" size={size} color={color} />,
+        }}
+      />
+      <Tab.Screen
+        name="Medications"
+        component={MedicationsNavigator}
+        options={{
+          tabBarIcon: ({ color, size }) => <Ionicons name="medical" size={size} color={color} />,
         }}
       />
       <Tab.Screen
