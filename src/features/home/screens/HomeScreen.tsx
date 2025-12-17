@@ -186,7 +186,14 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Medications</Text>
           <TouchableOpacity
-            onPress={() => navigation.getParent()?.navigate('Medications' as never)}
+            onPress={() => {
+              // Navigate to Medications at the AppNavigator level
+              // MainTabsNavigator's parent is AppNavigator, which contains Medications route
+              const appNavigator = navigation.getParent();
+              if (appNavigator) {
+                appNavigator.navigate('Medications' as never);
+              }
+            }}
           >
             <Text style={styles.viewAllText}>View all</Text>
           </TouchableOpacity>

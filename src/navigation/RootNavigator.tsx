@@ -2,7 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useSessionStore } from '@store/session.store';
 import React from 'react';
 import { AuthNavigator } from './AuthNavigator';
-import { MainTabsNavigator } from './MainTabsNavigator';
+import { AppNavigator } from './AppNavigator';
 
 export const RootNavigator: React.FC = () => {
   const { accessToken, isHydrated } = useSessionStore();
@@ -14,7 +14,7 @@ export const RootNavigator: React.FC = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainTabsNavigator /> : <AuthNavigator />}
+      {isAuthenticated ? <AppNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 };
