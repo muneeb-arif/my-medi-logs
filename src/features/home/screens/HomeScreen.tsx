@@ -122,6 +122,34 @@ export const HomeScreen: React.FC = () => {
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Appointments</Text>
+          <TouchableOpacity
+            onPress={() => {
+              const appNavigator = navigation.getParent();
+              if (appNavigator) {
+                appNavigator.navigate('Appointments' as never);
+              }
+            }}
+          >
+            <Text style={styles.viewAllText}>View all</Text>
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          style={styles.itemCard}
+          onPress={() => {
+            const appNavigator = navigation.getParent();
+            if (appNavigator) {
+              appNavigator.navigate('Appointments' as never);
+            }
+          }}
+        >
+          <Text style={styles.itemTitle}>Manage Appointments</Text>
+          <Text style={styles.itemSubtitle}>View and schedule appointments</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Reports</Text>
           <TouchableOpacity
             onPress={() => navigation.getParent()?.navigate('Reports' as never)}

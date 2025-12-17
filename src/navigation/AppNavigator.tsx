@@ -1,3 +1,4 @@
+import { AppointmentsNavigator } from '@features/appointments/AppointmentsNavigator';
 import { MedicationsNavigator } from '@features/medications/MedicationsNavigator';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
@@ -12,6 +13,11 @@ export const AppNavigator: React.FC = () => {
       <Stack.Screen
         name="Medications"
         component={MedicationsNavigator}
+        options={{ presentation: 'card' }}
+      />
+      <Stack.Screen
+        name="Appointments"
+        component={AppointmentsNavigator}
         options={{ presentation: 'card' }}
       />
     </Stack.Navigator>

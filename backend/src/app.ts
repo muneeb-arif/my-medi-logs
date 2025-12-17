@@ -10,6 +10,7 @@ import profilesRoutes from './modules/profiles/profiles.routes';
 import reportsRoutes from './modules/reports/reports.routes';
 import vitalsRoutes from './modules/vitals/vitals.routes';
 import medicationsRoutes from './modules/medications/medications.routes';
+import appointmentsRoutes from './modules/appointments/appointments.routes';
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use('/api/v1/profiles', profilesRoutes);
 app.use('/api/v1/profiles', reportsRoutes);
 app.use('/api/v1/profiles', vitalsRoutes);
 app.use('/api/v1/profiles', medicationsRoutes);
+app.use('/api/v1/profiles', appointmentsRoutes);
 
 // Fake upload endpoint (must be before error handler, no auth required)
 // Use regex to match any path after /fake-upload/

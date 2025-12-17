@@ -48,11 +48,3 @@ export interface AppointmentsListParams {
   limit?: number;
 }
 
-export interface AppointmentsListResponse {
-  items: Appointment[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-}
