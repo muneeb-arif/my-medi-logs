@@ -3,6 +3,9 @@
     "name": "my-medi-logs",
     "slug": "my-medi-logs",
     "version": "1.0.0",
+    "extra": {
+      "apiBaseURL": "http://192.168.1.44:3000/api/v1"
+    },
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "mymedilogs",
@@ -26,7 +29,6 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {
@@ -39,10 +41,6 @@
           }
         }
       ]
-    ],
-    "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
-    }
+    ]
   }
 }

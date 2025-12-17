@@ -1,0 +1,191 @@
+---
+alwaysApply: true
+---
+You are working on a healthcare mobile application named “My Medi Logs”.
+
+This project handles sensitive medical and mental health data.
+You MUST follow the rules below strictly.
+
+================================================================
+GLOBAL AUTHORITY
+================================================================
+
+1. The /docs folder is the source of truth.
+2. If there is a conflict, follow this priority order:
+   - docs/security-compliance.md (HIGHEST)
+   - docs/SRS-functional.md
+   - docs/architecture.md
+   - docs/domain-model.md
+   - docs/project-structure.md
+   - docs/coding-standards.md
+   - docs/api-contract.md
+   - docs/development-checklist.md
+
+If a requirement is unclear or missing, STOP and ASK instead of guessing.
+
+================================================================
+ARCHITECTURE RULES (NON-NEGOTIABLE)
+================================================================
+
+1. Tech Stack
+- Expo + React Native
+- TypeScript only
+- No experimental frameworks
+- No architectural rewrites unless explicitly asked
+
+2. Folder Structure
+- Use feature-based architecture under src/features/*
+- Shared code ONLY goes into:
+  - src/components
+  - src/theme
+  - src/services
+  - src/store
+  - src/utils
+  - src/domain
+- DO NOT invent new top-level folders.
+- DO NOT place feature logic outside its feature folder.
+
+3. Feature Isolation
+- Each feature may have:
+  - screens/
+  - components/
+  - api/
+  - hooks/
+  - types.ts
+- Features must NOT directly import from other features.
+- Shared logic must be extracted to allowed shared folders.
+
+================================================================
+STATE MANAGEMENT RULES
+================================================================
+
+1. Server State
+- Use React Query ONLY.
+- No server data in Zustand, context, or component state.
+
+2. Client / UI State
+- Use Zustand ONLY for:
+  - session
+  - UI flags
+  - feature entitlements
+- Do NOT mix server state and client state.
+
+================================================================
+NETWORKING & API RULES
+================================================================
+
+1. All HTTP calls MUST go through:
+   src/services/apiClient.ts
+
+2. Forbidden:
+- Direct fetch()
+- Direct axios usage
+- Inline networking logic in components or hooks
+
+3. API Contracts
+- Follow docs/api-contract.md strictly.
+- Do not invent endpoints, fields, or behaviors.
+- If backend behavior is unclear, ask.
+
+================================================================
+SECURITY & COMPLIANCE (CRITICAL)
+================================================================
+
+1. PHI (Protected Health Information)
+- NEVER log medical data, reports, vitals, medications, mental health text, or identifiers.
+- NEVER include PHI in console.log, error messages, analytics, or comments.
+
+2. Logging
+- Logs may contain:
+  - request IDs
+  - timestamps
+  - anonymized IDs
+- Logs must NEVER contain:
+  - names
+  - emails
+  - phone numbers
+  - report contents
+  - vitals values
+  - medications
+  - journal entries
+
+3. Notifications
+- Push notifications must NEVER include PHI.
+- Use neutral wording only.
+
+4. Emergency & Consent
+- Emergency access must be read-only.
+- Consent scope MUST be enforced at API boundaries.
+- Access logging must be respected in design.
+
+If a feature risks violating privacy, STOP and ASK.
+
+================================================================
+AI-SPECIFIC RULES (FUTURE)
+================================================================
+
+- Do NOT implement AI features unless explicitly instructed.
+- AI must NEVER run directly from the client.
+- AI must go through a backend gateway.
+- Follow:
+  - docs/ai-health-assistant.md
+  - docs/ai-psychologist.md
+  - docs/ai-family-risk.md
+
+No diagnosis, no treatment, no medication changes.
+
+================================================================
+UI & DESIGN RULES
+================================================================
+
+1. UI Consistency
+- Use shared components whenever possible.
+- Avoid inline styles for non-trivial layouts.
+- Use tokens from src/theme (colors, spacing, typography).
+
+2. Accessibility
+- Text must be readable.
+- Buttons must have clear labels.
+- No tiny touch targets.
+
+3. Scope Control
+- Implement ONLY what is requested.
+- Do not add “nice to have” UI elements.
+
+================================================================
+CODE QUALITY RULES
+================================================================
+
+1. TypeScript
+- No `any` unless explicitly approved.
+- Use strict typing.
+- Prefer enums/constants over magic strings.
+
+2. File Size
+- Prefer small files (<200 lines).
+- Extract logic instead of bloating components.
+
+3. Comments
+- Comment WHY something exists, not WHAT the code does.
+- No PHI in comments.
+
+================================================================
+WORKFLOW RULES
+================================================================
+
+- Implement features incrementally.
+- Do not jump ahead of the current phase in docs/development-checklist.md.
+- Do not scaffold future features unless asked.
+
+If unsure:
+- Ask a clarification question.
+- Do NOT invent behavior.
+
+================================================================
+FINAL RULE
+================================================================
+
+This is a medical application.
+Safety, privacy, and clarity are more important than speed or cleverness.
+
+If any instruction conflicts with these rules, STOP and ASK.

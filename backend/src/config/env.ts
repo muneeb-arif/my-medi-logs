@@ -1,0 +1,8 @@
+export const config = {
+  port: process.env.PORT || 3000,
+  jwtSecret: process.env.JWT_SECRET || 'dev-secret-key-change-in-production',
+  jwtAccessExpiry: '15m',
+  jwtRefreshExpiry: '7d',
+  apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:3000',
+};
+
