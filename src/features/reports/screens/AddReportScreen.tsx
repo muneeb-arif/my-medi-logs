@@ -108,7 +108,10 @@ export const AddReportScreen: React.FC = () => {
 
       navigation.goBack();
     } catch (error) {
-      Alert.alert('Error', 'Failed to upload report. Please try again.');
+      // Safe error message - no PHI
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to upload report. Please try again.';
+      Alert.alert('Error', errorMessage);
     }
   };
 

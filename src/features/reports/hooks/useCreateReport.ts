@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import Constants from 'expo-constants';
 import { reportsApi } from '../api/reports.api';
 import type { CreateReportInput, UploadUrlRequest } from '../types';
 
@@ -9,21 +10,39 @@ export const useCreateReport = (profileId: string) => {
     mutationFn: async (data: { input: CreateReportInput; fileUri: string; fileType: string }) => {
       const { input, fileUri, fileType } = data;
 
-      const uploadRequest: UploadUrlRequest = {
-        fileName: `report.${fileType.split('/')[1] || 'pdf'}`,
-        fileType,
-      };
+      try {
+        const uploadRequest: UploadUrlRequest = {
+          fileName: `report.${fileType.split('/')[1] || 'pdf'}`,
+          fileType,
+        };
 
-      const { uploadUrl, fileKey } = await reportsApi.getUploadUrl(profileId, uploadRequest);
+        const { uploadUrl, fileKey } = await reportsApi.getUploadUrl(profileId, uploadRequest);
 
-      await reportsApi.uploadFile(uploadUrl, fileUri, fileType);
+        // Replace localhost with the actual API base URL if needed
+        // Backend may return localhost URLs which don't work on physical devices
+        const apiBaseURL = Constants.expoConfig?.extra?.apiBaseURL || process.env.EXPO_PUBLIC_API_BASE_URL || '';
+        const baseUrlWithoutPath = apiBaseURL.replace('/api/v1', '');
+        
+        let correctedUploadUrl = uploadUrl;
+        if (uploadUrl.includes('localhost') && baseUrlWithoutPath) {
+          correctedUploadUrl = uploadUrl.replace('http://localhost:3000', baseUrlWithoutPath);
+        }
 
-      const reportInput: CreateReportInput = {
-        ...input,
-        fileKey,
-      };
+        await reportsApi.uploadFile(correctedUploadUrl, fileUri, fileType);
 
-      return reportsApi.create(profileId, reportInput);
+        const reportInput: CreateReportInput = {
+          ...input,
+          fileKey,
+        };
+
+        return reportsApi.create(profileId, reportInput);
+      } catch (error) {
+        // Re-throw with context about which step failed
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('Failed to create report');
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reports', 'list', profileId] });
